@@ -20,11 +20,10 @@ function HomeContent() {
   const [username, localSetUsername] = useState("");
   const [message, setMessage] = useState("");
   const [members, setMembers] = useState<string[]>([]);
-  const [partyStatus, setPartyStatus] = useState<PartyStatus>(
-    PartyStatus.UNJOINED
-  );
+  const [partyStatus, setPartyStatus] = useState<PartyStatus>(PartyStatus.UNJOINED);
   const [localPartyCode, setLocalPartyCode] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
+  const [rounds, setRounds] = useState("1");
   const [easy, setEasy] = useState(true);
   const [medium, setMedium] = useState(true);
   const [hard, setHard] = useState(true);
@@ -98,9 +97,7 @@ function HomeContent() {
       }
       setGoodBanner(true);
       setMessage(`${message}\n${data.username} joined`);
-      setPartyStatus((prev) =>
-        prev === PartyStatus.CREATED ? prev : PartyStatus.JOINED
-      );
+      setPartyStatus((prev) => (prev === PartyStatus.CREATED ? prev : PartyStatus.JOINED));
       setUsername(username);
       setMembers(data.players);
       setJoinLoading(false);
@@ -183,7 +180,13 @@ function HomeContent() {
     if (isNaN(Number(timeLimit))) {
       setStartLoading(false);
       setGoodBanner(false);
-      setMessage("Time limit must be a number.");
+      setMessage("Please enter a valid time limit.");
+      return;
+    }
+    if (!rounds || isNaN(Number(rounds)) || Number(rounds) < 1) {
+      setStartLoading(false);
+      setGoodBanner(false);
+      setMessage("Please enter a valid number of rounds.");
       return;
     }
     if (timeLimit && Number(timeLimit) < 1) {
@@ -203,6 +206,7 @@ function HomeContent() {
       socket.emit("start_game", {
         party_code: localPartyCode,
         time_limit: timeLimit,
+        rounds: rounds, // pass rounds setting to the server
         easy,
         medium,
         hard,
@@ -220,7 +224,6 @@ function HomeContent() {
     setMessage("");
     setLeaveLoading(false);
   };
-
   return (
     <div onMouseMove={handleMouseMove} className="page-wrapper">
       <div
@@ -357,6 +360,16 @@ function HomeContent() {
                   placeholder="Time limit (minutes)"
                   value={timeLimit}
                   onChange={(e) => setTimeLimit(e.target.value)}
+                  disabled={partyStatus !== PartyStatus.CREATED}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-3"
+                />
+              </div>
+              <div className="mt-4">
+                <input
+                  type="number"
+                  placeholder="Number of rounds"
+                  value={rounds}
+                  onChange={(e) => setRounds(e.target.value)}
                   disabled={partyStatus !== PartyStatus.CREATED}
                   className="w-full px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-3"
                 />

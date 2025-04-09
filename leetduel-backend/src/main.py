@@ -72,7 +72,35 @@ async def game_timeout(party_code: str, time_limit: str, problem_name: str) -> N
 def rate_limiter() -> None:
     return
 
-
+async def start_new_round(party_code: str) -> None:
+    """Start a new round with a new problem and reset per-round variables."""
+    party = parties[party_code]
+    difficulty = party["difficulties"]
+    time_limit = party["time_limit"]
+    problem = get_random_problem(difficulty)
+    party["problem"] = problem
+    party["status"] = "in_progress"
+    party["finish_count"] = 0
+    end_time = time.time() + (time_limit * 60)
+    party["end_time"] = end_time
+    for player in party["players"]:
+        player["passed"] = False
+        player["finish_order"] = None
+        player["current_score"] = 0
+        player["code"] = f"{problem['function_signature']}:\n    # your code here\n    return"
+        player["console_output"] = "Test case output"
+    await sio.emit(
+        "game_started",
+        {
+            "problem": problem,
+            "party_code": party_code,
+            "round": party["current_round"],
+            "total_rounds": party["total_rounds"],
+        },
+        room=party_code,
+    )
+    await sio.emit("update_time", {"time_left": (time_limit * 60)}, to=party["host"])
+    asyncio.create_task(game_timeout(party_code, time_limit, problem["name"]))
 
 # <----------------- Socket events ----------------->
 
@@ -82,7 +110,16 @@ async def create_party(sid: str, data: dict) -> None:
     party_code = generate_party_code()
     parties[party_code] = {
         "host": sid,
-        "players": [{"sid": sid, "username": data["username"], "passed": False}],
+        "players": [
+            {
+                "sid": sid,
+                "username": data["username"],
+                "passed": False,
+                "current_score": 0,
+                "total_score": 0,
+                "finish_order": None,
+            }
+        ],
         "problem": None,
         "status": "waiting",
     }
@@ -116,7 +153,14 @@ async def join_party(sid: str, data: dict) -> None:
         await sio.emit("error", {"message": "Username taken!"}, to=sid)
         return
     
-    player = {"sid": sid, "username": username}
+    player = {
+        "sid": sid,
+        "username": username,
+        "passed": False,
+        "current_score": 0,
+        "total_score": 0,
+        "finish_order": None,
+    }
 
     parties[party_code]["players"].append(player)
     player_usernames = [d["username"] for d in parties[party_code]["players"]]
@@ -134,8 +178,7 @@ async def join_party(sid: str, data: dict) -> None:
         problem = parties[party_code]["problem"]
         player["code"] = f"{problem['function_signature']}:\n    # your code here\n    return"
         player["console_output"] = "Test case output"
-        player["passed"] = False
-        await sio.emit("game_started", {"problem": parties[party_code]["problem"], "party_code": party_code}, to=sid)
+        await sio.emit("game_started", {"problem": parties[party_code]["problem"], "party_code": party_code, "round": parties[party_code].get('current_round', 1), "total_rounds": parties[party_code].get('total_rounds',1)}, to=sid)
         await sio.emit("announcement", {"message": f"{username} has joined the game!"}, room=party_code)
 
 
@@ -145,6 +188,7 @@ async def start_game(sid: str, data: dict, difficulties: list[bool] = []) -> Non
     party_code = data["party_code"]
     difficulty = difficulties or [data["easy"], data["medium"], data["hard"]]
     time_limit = int(data["time_limit"] or "15")
+    rounds = int(data.get("rounds", "1"))
 
     if party_code not in parties:
         await sio.emit("error", {"message": "Party not found"}, to=sid)
@@ -152,6 +196,10 @@ async def start_game(sid: str, data: dict, difficulties: list[bool] = []) -> Non
 
     if parties[party_code]["host"] == sid:
         try:
+            parties[party_code]["total_rounds"] = rounds
+            parties[party_code]["current_round"] = 1
+            parties[party_code]["finish_count"] = 0
+
             end_time = time.time() + (time_limit * 60)
             problem = get_random_problem(difficulty)
             parties[party_code]["problem"] = problem
@@ -161,11 +209,23 @@ async def start_game(sid: str, data: dict, difficulties: list[bool] = []) -> Non
             parties[party_code]["end_time"] = end_time
 
             for player in parties[party_code]["players"]:
+                player["passed"] = False
                 player["code"] = f"{problem['function_signature']}:\n    # your code here\n    return"
                 player["console_output"] = "Test case output"
-                player["passed"] = False
+                player["current_score"] = 0
+                player["total_score"] = 0
+                player["finish_order"] = None
 
-            await sio.emit("game_started", {"problem": problem, "party_code": party_code}, room=party_code)
+            await sio.emit(
+                "game_started",
+                {
+                    "problem": problem,
+                    "party_code": party_code,
+                    "round": 1,
+                    "total_rounds": rounds,
+                },
+                room=party_code,
+            )
             await sio.emit("update_time", {"time_left": (time_limit * 60)}, to=sid)
             asyncio.create_task(game_timeout(party_code, time_limit, problem["name"]))
 
@@ -208,6 +268,18 @@ async def submit_code(sid: str, data: dict) -> None:
         for player in parties[party_code]["players"]:
             if player["sid"] == sid:
                 player["passed"] = True
+                if player.get("finish_order") is None:
+                    parties[party_code]["finish_count"] += 1
+                    player["finish_order"] = parties[party_code]["finish_count"]
+                try:
+                    runtime = float(r["time"])
+                except Exception:
+                    runtime = 1
+                if runtime == 0:
+                    runtime = 1
+                new_score = r["passed test cases"] / (runtime * player["finish_order"])
+                if new_score > player.get("current_score", 0):
+                    player["current_score"] = new_score
                 await sio.emit("passed_all", to=sid)
 
     await sio.emit("code_submitted", {"message": message_to_client}, to=sid)
@@ -216,11 +288,31 @@ async def submit_code(sid: str, data: dict) -> None:
         await sio.emit("player_submit", {"message": message_to_room, "bold": True, "color": color}, room=party_code)
 
     if all_players_passed(party_code):
-        parties[party_code]["status"] = "waiting"
-        reset_players_passed(party_code)
-        await sio.emit("announcement", {"message": "All players passed! Game over."}, room=party_code)
-        await asyncio.sleep(3)
-        await sio.emit("game_over", room=party_code)
+        party = parties[party_code]
+        for player in party["players"]:
+            player["total_score"] += player.get("current_score", 0)
+        leaderboard = sorted(party["players"], key=lambda x: x["total_score"], reverse=True)
+        await sio.emit(
+            "round_leaderboard",
+            {
+                "leaderboard": [{"username": p["username"], "score": p["total_score"]} for p in leaderboard],
+                "round": party["current_round"],
+                "total_rounds": party["total_rounds"],
+            },
+            room=party_code,
+        )
+        if party["current_round"] < party["total_rounds"]:
+            party["current_round"] += 1
+            await asyncio.sleep(3)
+            await start_new_round(party_code)
+        else:
+            await asyncio.sleep(3)
+            await sio.emit(
+                "final_leaderboard",
+                {"leaderboard": [{"username": p["username"], "score": p["total_score"]} for p in leaderboard]},
+                room=party_code,
+            )
+            await sio.emit("game_over", room=party_code)
 
 
 @sio.event
@@ -294,6 +386,35 @@ async def leave_party(sid: str, data: dict) -> None:
                 await sio.leave_room(sid, party_code)
                 break
 
+@sio.event
+async def restart_game(sid: str, data: dict) -> None:
+    party_code = data["party_code"]
+    if party_code not in parties:
+        await sio.emit("error", {"message": "Party not found"}, to=sid)
+        return
+
+    if parties[party_code]["host"] != sid:
+        await sio.emit("error", {"message": "Only the host can restart the game."}, to=sid)
+        return
+
+    party = parties[party_code]
+    party["current_round"] = 1
+    party["finish_count"] = 0
+    for player in party["players"]:
+        player["total_score"] = 0
+        player["current_score"] = 0
+        player["finish_order"] = None
+        player["passed"] = False
+
+    config = {
+        "party_code": party_code,
+        "time_limit": party.get("time_limit", 15),
+        "rounds": party.get("total_rounds", 1),
+        "easy": party.get("difficulties", [True, True, True])[0],
+        "medium": party.get("difficulties", [True, True, True])[1],
+        "hard": party.get("difficulties", [True, True, True])[2],
+    }
+    await start_game(sid, config, party.get("difficulties", [True, True, True]))
 
 @sio.event
 async def disconnect(sid: str) -> None:
@@ -333,8 +454,9 @@ async def skip_problem(sid: str, data: dict) -> None:
 
     for player in party["players"]:
         player["passed"] = False
-
-    await start_game(sid, {"party_code": party_code, "time_limit": party["time_limit"]}, party["difficulties"])
+        player["finish_order"] = None
+        player["current_score"] = 0
+    await start_game(sid, {"party_code": party_code, "time_limit": party["time_limit"], "easy": party["difficulties"][0], "medium": party["difficulties"][1], "hard": party["difficulties"][2], "rounds": party["total_rounds"]}, party["difficulties"])
 
 
 @sio.event
@@ -439,7 +561,7 @@ async def read_root():
 
 
 @app.get("/parties")
-async def read_root():
+async def read_root_parties():
     return JSONResponse({"parties": parties})
 
 

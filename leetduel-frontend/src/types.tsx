@@ -30,6 +30,8 @@ export interface GameData {
   problem: Problem;
   party_code: string;
   time_limit: string;
+  round?: number;
+  total_rounds?: number;
 }
 
 export interface ErrorData {
