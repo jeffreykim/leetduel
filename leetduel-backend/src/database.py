@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
-from .config import database_url
+from src.config import database_url
 
 
 engine = create_engine(database_url)
