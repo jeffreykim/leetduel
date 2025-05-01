@@ -17,7 +17,7 @@ class Problem:
         self.stdinput = json.dumps([test_case.input for test_case in problem.test_cases])
 
 
-    def submit_code(self, code: str, timeout: int = 7, code_timeout: int = 2) -> SubmissionData:
+    def submit_code(self, code: str, timeout: int = 10, code_timeout: int = 2) -> SubmissionData:
         function_name = self.problem.function_signature.split("(")[0][4:]
         code = """
 import sys
