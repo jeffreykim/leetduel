@@ -1,7 +1,6 @@
 import json
 import subprocess
 import requests
-import modal
 import time
 from ratelimit import limits, RateLimitException
 
@@ -166,19 +165,6 @@ print(int((time.time_ns() - start_time) / 1e6))
         
         response = requests.post(code_execution_url, json={"code": code, "timeout": timeout, "stdinput": self.stdinput})
         return response.json()
-    
-
-    def run_modal(self, code: str, timeout: int) -> dict[str, str]:
-        app = modal.App.lookup("my-app", create_if_missing=True)
-
-        sb = modal.Sandbox.create(app=app)
-
-        p = sb.exec("python", "-c", code)
-        print(p.stdout.read())
-
-        sb.terminate()
-
-        return {"stderr": p.stderr.read(), "stdout": p.stdout.read()}
     
     
     def run_judge0(self, code: str, timeout: int) -> dict[str, str]:
