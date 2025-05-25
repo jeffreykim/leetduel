@@ -11,3 +11,5 @@ if not database_url:
 port = os.getenv("PORT") or 8000
 
 code_execution_url = os.getenv("CODE_EXECUTION_URL") or ""
+
+judge0 = os.getenv("JUDGE0_KEY") or ""
