@@ -481,7 +481,7 @@ function GameContent() {
         <div className="fixed top-4 right-[18%] z-50">
           <button
             onClick={handlePlayersClick}
-            className="bg-blue-600 transition hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow"
+            className="bg-blue-500 dark:bg-blue-600 transition hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow"
           >
             Players
           </button>
@@ -489,7 +489,7 @@ function GameContent() {
       )}
       {showMembers && (
         <div className="fixed top-15 right-[18%] z-50" ref={modalRef}>
-          <div className="bg-white dark:bg-gray-700 p-6 rounded shadow-lg w-80">
+          <div className="bg-white dark:bg-gray-700 p-6 rounded shadow-lg w-80 border border-gray-300 dark:border-gray-600">
             <ul>
               {members.map((member, index) => (
                 <li
@@ -534,7 +534,7 @@ function GameContent() {
         <div className="w-full h-[75vh] mx-auto mr-[16.66%]">
           <h1 className="text-4xl mb-8 text-center">Leetduel</h1>
           <div className="flex flex-col md:flex-row h-full gap-2 w-full">
-            <div className="relative md:w-1/2 bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-1 border-gray-500">
+            <div className="relative md:w-1/2 bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-1 border-gray-300 dark:border-gray-600">
               <h2 className="text-2xl font-semibold mb-4">{problem?.name}</h2>
               <h2 className="text-l font-semibold mb-4">
                 <span
@@ -560,7 +560,7 @@ function GameContent() {
                 className={`absolute bottom-4 right-4 ${
                   screen !== username || buttonDisabled || waiting
                     ? "bg-gray-500 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    : "bg-blue-500 dark:bg-blue-600 hover:bg-blue-700"
                 } text-white py-2 px-4 rounded-lg transition`}
               >
                 Run Code
@@ -585,7 +585,7 @@ function GameContent() {
                 />
               </div>
               <div
-                className="mt-2 bg-white dark:bg-black text-black dark:text-green-400 font-mono p-4 rounded-lg h-[20vh] overflow-auto"
+                className="mt-2 bg-white dark:bg-black text-green-600 dark:text-green-400 font-mono p-4 rounded-lg h-[20vh] overflow-auto border border-gray-300 dark:border-gray-600"
                 style={{ whiteSpace: "pre-wrap" }}
               >
                 {consoleOutput}
@@ -626,7 +626,7 @@ function GameContent() {
                 />
                 <button
                   onClick={sendMessage}
-                  className="flex-shrink-0 bg-blue-600 transition hover:bg-blue-700 text-white px-4 rounded-r-lg transition"
+                  className="flex-shrink-0 bg-blue-500 dark:bg-blue-600 transition hover:bg-blue-700 text-white px-4 rounded-r-lg transition"
                 >
                   Send
                 </button>
@@ -637,7 +637,7 @@ function GameContent() {
         <div className="fixed bottom-0 left-0 m-4 flex gap-2">
           <button
             onClick={leaveGame}
-            className="bg-red-600 transition hover:bg-red-700 text-white py-2 px-4 rounded"
+            className="bg-red-500 dark:bg-red-600 transition hover:bg-red-700 text-white py-2 px-4 rounded"
           >
             Leave Game
           </button>
@@ -646,8 +646,8 @@ function GameContent() {
             disabled={skipButtonDisabled}
             className={`${
               waiting
-                ? "bg-green-600 transition hover:bg-green-700"
-                : "bg-gray-600 transition hover:bg-gray-700"
+                ? "bg-green-500 dark:bg-green-600 transition hover:bg-green-700"
+                : "bg-gray-500 dark:bg-gray-600 transition hover:bg-gray-700"
             } text-white py-2 px-4 rounded`}
           >
             {waiting ? "Continue" : "Skip Problem"}
@@ -678,7 +678,7 @@ function GameContent() {
         {!finalLeaderboard && (
           <div className="fixed bottom-4 right-[18%] z-50">
             <button
-              className="bg-gray-600 transition hover:bg-gray-700 text-white py-2 px-4 rounded"
+              className="bg-gray-500 dark:bg-gray-600 transition hover:bg-gray-700 text-white py-2 px-4 rounded"
               onClick={() => setShowHelp(true)}
             >
               Help
