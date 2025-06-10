@@ -439,8 +439,8 @@ function GameContent() {
         </div>
       )}
       {finalLeaderboard && (
-        <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 bg-opacity-60 z-60">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 w-full max-w-md shadow-xl text-center">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-300 dark:bg-gray-900 bg-opacity-60 z-60">
+          <div className="bg-gray-200 dark:bg-gray-800 rounded-2xl p-8 w-full max-w-md shadow-xl text-center">
             <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
               🏆 Final Leaderboard
             </h2>
@@ -448,7 +448,7 @@ function GameContent() {
               {finalLeaderboard.leaderboard.map((entry, index) => (
                 <li
                   key={index}
-                  className="flex justify-between items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md"
+                  className="flex justify-between items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-md"
                 >
                   <span className="font-semibold">
                     {index + 1}. {entry.username}
@@ -464,13 +464,13 @@ function GameContent() {
                 setRoundLeaderboard(null);
                 setFinalLeaderboard(null);
               }}
-              className="mt-4 bg-green-600 hover:bg-green-700 m-2 text-white py-2 px-6 rounded-lg transition"
+              className="mt-4 bg-green-500 dark:bg-green-600 hover:bg-green-700 m-2 text-white py-2 px-6 rounded-lg transition duration-400"
             >
               View Code
             </button>
             <button
               onClick={backToLobby}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition"
+              className="bg-blue-500 dark:bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition duration-400"
             >
               Return to Lobby
             </button>
@@ -481,45 +481,67 @@ function GameContent() {
         <div className="fixed top-4 right-[18%] z-50">
           <button
             onClick={handlePlayersClick}
-            className="bg-blue-500 dark:bg-blue-600 transition hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow"
+            className="bg-blue-500 dark:bg-blue-600 transition duration-400 hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow"
           >
             Players
           </button>
         </div>
       )}
-      {showMembers && (
-        <div className="fixed top-15 right-[18%] z-50" ref={modalRef}>
-          <div className="bg-white dark:bg-gray-700 p-6 rounded shadow-lg w-80 border border-gray-300 dark:border-gray-600">
-            <ul>
-              {members.map((member, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between items-center py-2 border-b border-gray-300 dark:border-gray-400"
-                >
-                  <span>{member.username}</span>
-                  <button
-                    className={`px-2 py-1 rounded text-white ${
-                      member.username === username
-                        ? "bg-green-500 transition hover:bg-green-600"
-                        : passedAll || waiting
-                        ? "bg-green-500 transition hover:bg-green-600"
-                        : "bg-gray-500 cursor-not-allowed"
+      <div
+        className={`fixed top-15 right-[18%] z-50 ${
+          !showMembers && "pointer-events-none"
+        }`}
+        ref={modalRef}
+      >
+        <div
+          className={`bg-white dark:bg-gray-700 p-6 rounded shadow-lg w-80 border border-gray-300 dark:border-gray-600 transition-all duration-300 ease-in-out overflow-hidden origin-top transform
+              ${
+                showMembers
+                  ? "max-h-[500px] opacity-100 scale-y-100 translate-y-0"
+                  : "max-h-0 opacity-0 scale-y-95 -translate-y-4"
+              }`}
+          style={{
+            boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
+          }}
+        >
+          <ul className="space-y-3">
+            {members.map((member, index) => (
+              <li
+                key={index}
+                className={`flex justify-between items-center py-2 border-b border-gray-300 dark:border-gray-400 transition-all duration-300 ease-in-out transform
+                    ${
+                      showMembers
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 -translate-y-8"
                     }`}
-                    disabled={
-                      member.username === username
-                        ? false
-                        : !passedAll && !waiting
-                    }
-                    onClick={() => handleSpectateClick(member.username)}
-                  >
-                    {member.username === username ? "Home" : "Spectate"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+                style={{
+                  transitionDelay: showMembers ? `${index * 50}ms` : "0ms",
+                }}
+              >
+                <span>{member.username}</span>
+                <button
+                  className={`px-2 py-1 rounded text-white ${
+                    member.username === username
+                      ? "bg-green-500 transition duration-400 hover:bg-green-600"
+                      : passedAll || waiting
+                      ? "bg-green-500 transition duration-400 hover:bg-green-600"
+                      : "bg-gray-500 cursor-not-allowed"
+                  }`}
+                  disabled={
+                    member.username === username
+                      ? false
+                      : !passedAll && !waiting
+                  }
+                  onClick={() => handleSpectateClick(member.username)}
+                >
+                  {member.username === username ? "Home" : "Spectate"}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-      )}
+      </div>
+
       <div
         className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 pr-[18%] text-gray-900 dark:text-gray-100"
         style={{ position: "relative" }}
@@ -561,7 +583,7 @@ function GameContent() {
                   screen !== username || buttonDisabled || waiting
                     ? "bg-gray-500 cursor-not-allowed"
                     : "bg-blue-500 dark:bg-blue-600 hover:bg-blue-700"
-                } text-white py-2 px-4 rounded-lg transition`}
+                } text-white py-2 px-4 rounded-lg transition duration-400`}
               >
                 Run Code
               </button>
@@ -585,8 +607,13 @@ function GameContent() {
                 />
               </div>
               <div
-                className="mt-2 bg-white dark:bg-black text-green-600 dark:text-green-400 font-mono p-4 rounded-lg h-[20vh] overflow-auto border border-gray-300 dark:border-gray-600"
-                style={{ whiteSpace: "pre-wrap" }}
+                className="mt-2 bg-white dark:bg-black text-green-600 dark:text-green-400 p-4 rounded-lg h-[20vh] overflow-auto border border-gray-300 dark:border-gray-600"
+                style={{
+                  whiteSpace: "pre-wrap",
+                  fontFamily: "monospace",
+                  fontSize: "0.9rem",
+                  lineHeight: "1.5",
+                }}
               >
                 {consoleOutput}
               </div>
@@ -626,7 +653,7 @@ function GameContent() {
                 />
                 <button
                   onClick={sendMessage}
-                  className="flex-shrink-0 bg-blue-500 dark:bg-blue-600 transition hover:bg-blue-700 text-white px-4 rounded-r-lg transition"
+                  className="flex-shrink-0 bg-blue-500 dark:bg-blue-600 transition duration-400 hover:bg-blue-700 text-white px-4 rounded-r-lg transition"
                 >
                   Send
                 </button>
@@ -637,7 +664,7 @@ function GameContent() {
         <div className="fixed bottom-0 left-0 m-4 flex gap-2">
           <button
             onClick={leaveGame}
-            className="bg-red-500 dark:bg-red-600 transition hover:bg-red-700 text-white py-2 px-4 rounded"
+            className="bg-red-500 dark:bg-red-600 transition duration-400 hover:bg-red-700 text-white py-2 px-4 rounded"
           >
             Leave Game
           </button>
@@ -646,39 +673,57 @@ function GameContent() {
             disabled={skipButtonDisabled}
             className={`${
               waiting
-                ? "bg-green-500 dark:bg-green-600 transition hover:bg-green-700"
-                : "bg-gray-500 dark:bg-gray-600 transition hover:bg-gray-700"
+                ? "bg-green-500 dark:bg-green-600 transition duration-400 hover:bg-green-700"
+                : "bg-gray-500 dark:bg-gray-600 transition duration-400 hover:bg-gray-700"
             } text-white py-2 px-4 rounded`}
           >
             {waiting ? "Continue" : "Skip Problem"}
           </button>
         </div>
-        {showHelp && (
+        <div
+          className={`absolute bottom-15 right-[18%] z-50 ${
+            !showHelp && "pointer-events-none"
+          }`}
+          ref={helpModalRef}
+        >
           <div
-            className="absolute bottom-15 right-[18%] z-50"
-            ref={helpModalRef}
+            className={`bg-white dark:bg-gray-700 p-6 rounded shadow-lg w-max border border-gray-300 dark:border-gray-600 transition-all duration-300 ease-in-out overflow-hidden origin-bottom transform
+              ${
+                showHelp
+                  ? "max-h-[500px] opacity-100 scale-y-100 translate-y-0"
+                  : "max-h-0 opacity-0 scale-y-95 translate-y-4"
+              }`}
+            style={{
+              boxShadow: "0 -10px 40px rgba(0,0,0,0.15)",
+            }}
           >
-            <div className="bg-white dark:bg-gray-700 p-6 rounded shadow-lg w-max">
-              <button
-                className={`ml-2 ${
-                  reported
-                    ? "bg-gray-500"
-                    : "bg-red-600 transition hover:bg-red-700"
-                } text-white py-2 px-4 rounded`}
-                disabled={reported}
-                onClick={report}
-              >
-                {reported
-                  ? "Broken Test Cases Reported"
-                  : "Report Broken Test Case"}
-              </button>
-            </div>
+            <button
+              className={`ml-2 ${
+                reported
+                  ? "bg-gray-500"
+                  : "bg-red-600 transition-all duration-300 hover:bg-red-700"
+              } text-white py-2 px-4 rounded transform transition-all duration-300 ease-in-out
+                ${
+                  showHelp
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              style={{
+                transitionDelay: showHelp ? "50ms" : "0ms",
+              }}
+              disabled={reported}
+              onClick={report}
+            >
+              {reported
+                ? "Broken Test Cases Reported"
+                : "Report Broken Test Case"}
+            </button>
           </div>
-        )}
+        </div>
         {!finalLeaderboard && (
           <div className="fixed bottom-4 right-[18%] z-50">
             <button
-              className="bg-gray-500 dark:bg-gray-600 transition hover:bg-gray-700 text-white py-2 px-4 rounded"
+              className="bg-gray-500 dark:bg-gray-600 transition duration-400 hover:bg-gray-700 text-white py-2 px-4 rounded"
               onClick={() => setShowHelp(true)}
             >
               Help

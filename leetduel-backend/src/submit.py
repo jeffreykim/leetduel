@@ -74,7 +74,7 @@ print(int((time.time_ns() - start_time) / 1e6))
                 return SubmissionData(False, "No response")
 
             if result["stderr"]:
-                return SubmissionData(False, result["stderr"])
+                return SubmissionData(False, result["stderr"], stdout=result["stdout"].split("|\n")[-1])
             
             return self.check_test_cases(result["stdout"], code_timeout)
 
@@ -85,7 +85,7 @@ print(int((time.time_ns() - start_time) / 1e6))
             return SubmissionData(False, "Rate limited! Please wait 5 seconds and try again.")
         
         except Exception as e:
-            return SubmissionData(False, str(e))
+            return SubmissionData(False, str(e), stdout=result["stdout"])
         
 
     def check_test_cases(self, d: str, code_timeout: int) -> SubmissionData:
@@ -142,7 +142,7 @@ print(int((time.time_ns() - start_time) / 1e6))
         submission.passed_test_cases = count
         
         if failed_index != -1:
-            submission.failed_test = f"Input: {str(eval(test_cases[failed_index].input))}\nExpected {test_cases[failed_index].output}, got {data[failed_index]}"
+            submission.failed_test = f"Input: {str(eval(test_cases[failed_index].input))[1:-1]}\nExpected {test_cases[failed_index].output}, got {data[failed_index]}"
 
         return submission
     
@@ -210,5 +210,6 @@ print(int((time.time_ns() - start_time) / 1e6))
             description = response_data["status"]["description"]
 
             i += 1
+
         
         return {"stderr": response_data["stderr"], "stdout": response_data["stdout"]}

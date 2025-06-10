@@ -156,6 +156,8 @@ async def start_next_round(sid: str, data: dict) -> None:
     print(f"start_next_round event received from {sid}")
     party_code = data["party_code"]
     if party_code not in parties or sid != parties[party_code].host:
+        message = MessageData("Only the host can start the next round!", True, "")
+        await sio.emit("message_received", message, to=sid)
         return
     await start_new_round(party_code)
 
@@ -299,9 +301,9 @@ async def submit_code(sid: str, data: dict) -> None:
 
     submission = problem.submit_code(code)
     status = "Accepted" if submission.accepted else "Failed"
-
+    
     if submission.message:
-        message_to_client = f"{status}, {submission.message}"
+        message_to_client = f"{status}, {submission.message}stdout: {submission.stdout}"
         message_to_room = f"{data['username']} encountered an error."
 
     else:
@@ -479,6 +481,8 @@ async def skip_problem(sid: str, data: dict) -> None:
     party = parties[party_code]
 
     if party.host != sid:
+        message = MessageData("Only the host can skip problems!", True, "")
+        await sio.emit("message_received", asdict(message), to=sid)
         return
     
     message = MessageData("Problem is being skipped...", True, "")
