@@ -50,3 +50,6 @@ def remove_reported_problems(db: Session) -> int:
     db.query(Problem).filter(Problem.reports >= 1).delete(synchronize_session=False)
     db.commit()
     return count
+
+def test():
+    return 1
