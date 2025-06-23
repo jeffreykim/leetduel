@@ -79,10 +79,10 @@ print(int((time.time_ns() - start_time) / 1e6))
             return self.check_test_cases(result["stdout"], code_timeout)
 
         except subprocess.TimeoutExpired:
-            return SubmissionData(False, "Time limit exceeded")
+            return SubmissionData(False, "Time limit exceeded\n")
         
         except RateLimitException:
-            return SubmissionData(False, "Rate limited! Please wait 5 seconds and try again.")
+            return SubmissionData(False, "Rate limited! Please wait 5 seconds and try again.\n")
         
         except Exception as e:
             return SubmissionData(False, str(e), stdout=result["stdout"])
@@ -93,7 +93,7 @@ print(int((time.time_ns() - start_time) / 1e6))
         any_order = self.problem.any_order
 
         if not d:
-            return SubmissionData(False, "No output")
+            return SubmissionData(False, "No output\n")
 
         data: list[str] = d.split("\n")[:-1]
         time: str = data.pop()

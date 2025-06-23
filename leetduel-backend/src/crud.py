@@ -44,3 +44,9 @@ def increment_reports(db: Session, title: str) -> None:
     if reports is not None:
         db.query(Problem).filter(Problem.problem_name == title).update({"reports": reports + 1})
         db.commit()
+
+def remove_reported_problems(db: Session) -> int:
+    count = db.query(Problem).filter(Problem.reports >= 1).count()
+    db.query(Problem).filter(Problem.reports >= 1).delete(synchronize_session=False)
+    db.commit()
+    return count
